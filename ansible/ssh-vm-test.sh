@@ -1,0 +1,8 @@
+echo "> Connection to Vagrant VM 192.168.30.11"
+ssh -o StrictHostKeyChecking=no -l ansible 192.168.30.11 "cat /etc/os-release"
+echo "> Connection to Vagrant VM 192.168.30.12"
+ssh -o StrictHostKeyChecking=no -l ansible 192.168.30.12 "cat /etc/os-release"
+echo "> Connection to Docker VM 172.17.0.3"
+ssh -o StrictHostKeyChecking=no -l ansible 172.17.0.3 "cat /etc/os-release"
+echo "> Connection to Docker VM 172.17.0.4"
+ssh -o StrictHostKeyChecking=no -l ansible 172.17.0.4 "cat /etc/os-release"

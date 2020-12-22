@@ -117,6 +117,8 @@ goto end
     echo Command:
     echo      start             Start service with docker.
     echo      down              Stop service with docker.
+    echo      vagrant           Start virtual machine with vagrant.
+    echo      docker            Start virtual machine with docker.
     echo.
     echo Run 'cli [COMMAND] --help' for more information on a command.
     goto end
@@ -140,11 +142,21 @@ goto end
         -t docker-ansible:%PROJECT_NAME% ^
         .\ansible
 
+    echo ^> Generate SSH key
+    IF NOT EXIST ssh-key (
+        mkdir ssh-key
+        docker run -ti --rm ^
+          -v %cd%\ssh-key:/root/.ssh ^
+          --name demo_service_ansible_%PROJECT_NAME% ^
+          docker-ansible:%PROJECT_NAME% ^
+          bash -l -c "ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa"
+    )
     echo ^> Startup docker container instance
     @rem Run next deveopment with stdout
     docker run -ti --rm ^
         -v %cd%\ansible:/work ^
-        --name demo_service_ansible_%PROJECT_NAME%^
+        -v %cd%\ssh-key:/root/.ssh ^
+        --name demo_service_ansible_%PROJECT_NAME% ^
         docker-ansible:%PROJECT_NAME%
 
     goto end
@@ -180,6 +192,62 @@ goto end
 
 :cli-down-help (
     echo Close docker container instance by docker-compose.
+    goto end
+)
+
+:: ------------------- Command "vagrant" mathod -------------------
+
+:cli-vagrant (
+    cd %CLI_DIRECTORY%\vagrant\ansible-vm-1
+    vagrant up
+    cd %CLI_DIRECTORY%\vagrant\ansible-vm-2
+    vagrant up
+
+    goto end
+)
+
+:cli-vagrant-args (
+    goto end
+)
+
+:cli-vagrant-help (
+    echo Start virtual machine with vagrant.
+    goto end
+)
+
+:: ------------------- Command "docker" mathod -------------------
+
+:cli-docker (
+    echo ^> Build ebook Docker images
+    docker build --rm ^
+        -t docker-ansible-host:%PROJECT_NAME% ^
+        .\docker
+
+    docker rm -f demo_host_1_%PROJECT_NAME%
+    docker run -d ^
+        -v %cd%\ssh-key:/ssh-key ^
+        --name demo_host_1_%PROJECT_NAME% ^
+        docker-ansible-host:%PROJECT_NAME%
+    echo ^> demo_host_1_%PROJECT_NAME% address :
+    docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' demo_host_1_%PROJECT_NAME%
+
+    docker rm -f demo_host_2_%PROJECT_NAME%
+    docker run -d ^
+        -v %cd%\ssh-key:/ssh-key ^
+        --name demo_host_2_%PROJECT_NAME% ^
+        docker-ansible-host:%PROJECT_NAME%
+    echo ^> demo_host_2_%PROJECT_NAME% address :
+    docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' demo_host_2_%PROJECT_NAME%
+
+    goto end
+)
+
+:cli-docker-args (
+    goto end
+)
+
+:cli-docker-help (
+    echo Start virtual machine with docker.
     goto end
 )
 
