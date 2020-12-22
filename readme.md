@@ -1,5 +1,29 @@
 # Ansible
 
+## 指令
+
++ 啟動 Ansible 服務
+
+```
+ansiblew start
+```
+> 啟動服務並產生必要的 SSH 金鑰
+
++ 啟動虛擬機
+
+```
+ansiblew vagrant
+```
+> 啟動 VirtualBox 建立的虛擬機，ip : 192.168.30.11、192.168.30.12
+
+```
+ansiblew docker
+```
+> 啟動 Docker 建立的虛擬機，ip : 172.17.0.3、172.17.0.4
+
+
+## 介紹
+
 #### [Introduction](https://www.tutorialspoint.com/ansible/ansible_introduction.htm)
 
 **Ansible is simple open source IT engine which automates application deployment, intra service orchestration, cloud provisioning and many other IT tools.**
@@ -41,6 +65,8 @@ Ansible 運作方式如下：
 ```
 [defaults]
 inventory = {{CWD}}/hosts.yaml
+remote_user = ansible
+private_key_file = ~/.ssh/id_rsa
 ```
 
 #### [Ansible Inventory](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)
@@ -68,6 +94,81 @@ ansible-inventory -i ./hosts.example.yaml --list
 ```
 ansible-inventory -i ./hosts.example.yaml --graph
 ```
+
+###### [Ansible SSH variable](https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html)
+
+Inventory 中除了規劃 host 群組外，更重要是其連線方式，而設置在 ansible.cfg 中的數個參數等同於 inventory 中的 hosts 變數。
+
++ ansible_host，目標主機位置
+
++ ansible_port，目標主機的連接埠
+
++ ansible_user，登入目標主機時的帳號
+> ansible.cfg 中 ```remote_user``` 為預設帳號
+
++ ansible_password，登入目標主機的密碼
+
++ ansible_ssh_private_key_file，使用 SSH 連線時其 Private Key 檔案
+> ansible.cfg 中 ```private_key_file``` 為預設檔案
+
+###### 目標主機
+
+Ansible 的預設是無需在對象主機安裝其他軟體，但實際上仍有必需完成的作業
+
++ 安裝 SSH 工具
+
+```
+apt-get update -y && apt-get install -y ssh
+```
+
+原則上幾乎所有 Linux 作業系統皆有安裝 SSH 工具，但對於 Docker 容器則需要額外處理
+
++ 認證 Ansible 主機的 Public Key
+
+如何放置 Public Key 是個困難的問題，常見的建置方式是透過 ```ssh-copy-id```，但這設置會碰到兩個問題
+
+1. SSH 預設調整
+
+```
+修改 sshd_config
+sed -i '/^PasswordAuthentication/s/no/yes/' /etc/ssh/sshd_config
+sed -i '/^PubkeyAuthentication/s/no/yes/' /etc/ssh/sshd_config
+
+新增 sshd_config
+chmod 777 /etc/ssh/sshd_config
+echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config
+chmod 644 /etc/ssh/sshd_config
+```
+
+在大多數 SSH 工具安裝後是不允許 SSH 連線時使用密碼 (PasswordAuthentication) 登入和上傳公鑰 (PubkeyAuthentication)，因此需要額外開設才能建立連線
+
+2. 獨立帳號
+
+```
+useradd -s /bin/bash -m ansible
+passwd ansible
+```
+
+passwd 需於執行後輸入密碼，若不設置則為空密碼的帳號，可以透過 root 帳號 su 切換，但無法供 SSH 連入 ( 因是建立隨機密碼導致 )；依據資訊安全規劃考量，原則上由 root 建立的帳號，再次狀況下無法供外部使用，即使進入也無法切換至其他主機帳號或對相關帳號下服務進行操控。
+
+但若無使用 passwd，則無法使用 ssh-copy-id 推送公鑰，這也會導致無法初始主機關聯，因此要用何種方式導入公鑰則是其設計細節。
+
++ 雲端公鑰來源
+> 以 git、curl 下載公鑰並放置提供連入帳號目錄下
+
++ 自主登入服務
+> 以 pull 架構思考，設計主機詢問 Ansible 主機 API 以取得公鑰資訊與建立相關帳號
+
+```
+sudo useradd -s /bin/bash -m ansible
+cd /home/ansible
+sudo mkdir -p .ssh
+sudo chmod 777 .ssh
+sudo cat /ssh-key/id_rsa.pub >> .ssh/authorized_keys
+sudo chmod 700 .ssh
+sudo chown ansible:ansible .ssh
+```
+> 在此專案測試中，Virtual Machine 啟動會將已經取得的公鑰放入指定帳號，以確保 Ansible 服務啟動時能與之溝通
 
 #### [Ansible Playbook](https://docs.ansible.com/ansible/latest/user_guide/index.html#writing-tasks-plays-and-playbooks)
 
@@ -98,5 +199,13 @@ ansible-galaxy install geerlingguy.gitlab -p roles
 ## 參考
 
 + [Red Hat Ansible](https://www.ansible.com/use-cases/configuration-management)
-    - [Ansible 自動化部署工具](https://medium.com/@chihsuan/b2e8b8534a8d)
-    - [Run Ansible with Docker](https://medium.com/@iced_burn/run-ansible-with-docker-9eb27d75285b)
++ [Ansible Tutorial](https://www.tutorialspoint.com/ansible/index.htm)
++ 介紹
+  - [Ansible 自動化部署工具](https://medium.com/@chihsuan/b2e8b8534a8d)
+  - [現代 IT 人一定要知道的 Ansible 自動化組態技巧](https://www.slideshare.net/freezejonny/it-ansible)
++ 相關技術
+  - [Run Ansible with Docker](https://medium.com/@iced_burn/run-ansible-with-docker-9eb27d75285b)
++ [SSH ( Secure Shell )](https://zh.wikipedia.org/wiki/Secure_Shell)
+    - [ssh-copy-id](https://www.ssh.com/ssh/copy-id)
+    - [sshpass & ssh-copy-id](https://jerryw.blog/2018/09/29/%E5%9C%A8-shell-script-%E4%B8%AD%E9%81%BF%E5%85%8D%E4%BA%92%E5%8B%95%E5%BC%8F%E7%9A%84-ssh-copy-id-%E7%9A%84%E5%81%9A%E6%B3%95/)
+    - [how to avoid ssh asking permission?](https://unix.stackexchange.com/questions/33271)
