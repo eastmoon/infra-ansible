@@ -170,10 +170,68 @@ sudo chown ansible:ansible .ssh
 ```
 > 在此專案測試中，Virtual Machine 啟動會將已經取得的公鑰放入指定帳號，以確保 Ansible 服務啟動時能與之溝通
 
-#### [Ansible Playbook](https://docs.ansible.com/ansible/latest/user_guide/index.html#writing-tasks-plays-and-playbooks)
+#### [Ansible Playbook](https://docs.ansible.com/ansible/latest/user_guide/playbooks_intro.html#playbooks-intro)
 
 + [CLI：ansible-playbook](https://docs.ansible.com/ansible/latest/cli/ansible-playbook.html#ansible-playbook)
 + [CLI：ansible-console](https://docs.ansible.com/ansible/latest/cli/ansible-console.html)
++ [Writing tasks, plays, and playbooks](https://docs.ansible.com/ansible/latest/user_guide/playbooks_intro.html#playbooks-intro)
++ [怎麼操作 Ansible？](https://ithelp.ithome.com.tw/articles/10185231)
+
+![Ad-Hoc & Playbook](https://github.com/chusiang/automate-with-ansible/raw/master/imgs/automate_with_ansible_basic-17.jpg)
+
++ Ad-Hoc Commands，短指令
+
+```
+ansible <host patterns> -m <module name>
+```
+> 透過 ansible 對目標 host 執行設定的模組 ( module )
+
+```
+ansible all -m ping
+```
+> 使用 ping 模組
+
+```
+ansible all -m command -a "echo Hello World"
+```
+> 使用 command 模組
+
++ Playbooks，劇本
+
+Playbooks 是 Ansible 的腳本，依據 Play、Task、Module 結構構成。
+
+```
+Play
+  └ Task
+    └ Module
+```
+
+相對應的結構換成 Playbooks 就如下所示：
+
+```
+- name: It is a basic playbook
+  hosts: all
+  tasks:
+    - name: Hello World
+      command: echo "Hello World"
+    - name: Check to host
+      ping
+```
+> 範本 hello-world.yml
+
+在完成腳本後‧以下述指令執行
+
+```
+ansible-playbook hello-world.yml
+```
+
+###### [Modules](https://docs.ansible.com/ansible/2.8/user_guide/modules_intro.html)
+
++ [Modules 列表](https://docs.ansible.com/ansible/2.8/modules/modules_by_category.html)
+
++ [raw](https://docs.ansible.com/ansible/2.3/raw_module.html)
+> 在對象目標主機沒有 python 情況可以使用 shell 執行
+
 
 #### [Ansible roles](https://docs.ansible.com/ansible/latest/user_guide/playbooks_reuse_roles.html)
 

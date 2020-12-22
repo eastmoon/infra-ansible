@@ -68,3 +68,11 @@
 ##    commontoall: thisvar
 
 ## Hosts setting:
+vagrant:
+  hosts:
+    192.168.30.11:
+    192.168.30.12:
+docker:
+  hosts:
+    172.17.0.3:
+    172.17.0.4:

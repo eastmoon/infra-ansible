@@ -1,0 +1,7 @@
+- name: It is a basic playbook
+  hosts: all
+  tasks:
+    - name: Hello World
+      command: echo "Hello World"
+    - name: Check to host
+      ping:
