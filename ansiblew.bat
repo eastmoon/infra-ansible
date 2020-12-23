@@ -116,7 +116,6 @@ goto end
     echo.
     echo Command:
     echo      start             Start service with docker.
-    echo      down              Stop service with docker.
     echo      vagrant           Start virtual machine with vagrant.
     echo      docker            Start virtual machine with docker.
     echo.
@@ -170,84 +169,96 @@ goto end
 )
 
 :cli-start-help (
-    echo Start service with docker compose.
+    echo Start service with docker.
     echo.
     echo Options:
     echo.
     goto end
 )
 
-:: ------------------- Command "down" mathod -------------------
-
-:cli-down (
-    @rem Close docker container instance by docker-compose
-    docker-compose -f ./docker/docker-compose-%PROJECT_ENV%.yml down
-
-    goto end
-)
-
-:cli-down-args (
-    goto end
-)
-
-:cli-down-help (
-    echo Close docker container instance by docker-compose.
-    goto end
-)
-
 :: ------------------- Command "vagrant" mathod -------------------
 
 :cli-vagrant (
-    cd %CLI_DIRECTORY%\vagrant\ansible-vm-1
-    vagrant up
-    cd %CLI_DIRECTORY%\vagrant\ansible-vm-2
-    vagrant up
-
+    IF defined DOWN_VAGRANT (
+        echo ^> Destroy virtual machine with vagrant destroy
+        cd %CLI_DIRECTORY%\vagrant\ansible-vm-1
+        vagrant destroy -f
+        cd %CLI_DIRECTORY%\vagrant\ansible-vm-2
+        vagrant destroy -f
+    ) ELSE (
+        echo ^> Startup virtual machine with vagrant up
+        cd %CLI_DIRECTORY%\vagrant\ansible-vm-1
+        vagrant up
+        cd %CLI_DIRECTORY%\vagrant\ansible-vm-2
+        vagrant up
+    )
+    cd %CLI_DIRECTORY%
     goto end
 )
 
 :cli-vagrant-args (
+    for %%p in (%*) do (
+        if "%%p"=="--down" ( set DOWN_VAGRANT=1 )
+    )
     goto end
 )
 
 :cli-vagrant-help (
     echo Start virtual machine with vagrant.
+    echo.
+    echo Options:
+    echo      --down            Close down virtual machine with vagrant.
+    echo.
     goto end
 )
 
 :: ------------------- Command "docker" mathod -------------------
 
 :cli-docker (
-    echo ^> Build ebook Docker images
-    docker build --rm ^
-        -t docker-ansible-host:%PROJECT_NAME% ^
-        .\docker
+    IF defined DOWN_DOCKER (
+        echo ^> Remove docker container
+        docker rm -f demo_host_1_%PROJECT_NAME%
+        docker rm -f demo_host_2_%PROJECT_NAME%
+    ) ELSE (
+        echo ^> Build ebook Docker images
+        docker build --rm ^
+            -t docker-ansible-host:%PROJECT_NAME% ^
+            .\docker
 
-    docker rm -f demo_host_1_%PROJECT_NAME%
-    docker run -d ^
-        -v %cd%\ssh-key:/ssh-key ^
-        --name demo_host_1_%PROJECT_NAME% ^
-        docker-ansible-host:%PROJECT_NAME%
-    echo ^> demo_host_1_%PROJECT_NAME% address :
-    docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' demo_host_1_%PROJECT_NAME%
+        docker rm -f demo_host_1_%PROJECT_NAME%
+        docker run -d ^
+            -v %cd%\ssh-key:/ssh-key ^
+            --name demo_host_1_%PROJECT_NAME% ^
+            docker-ansible-host:%PROJECT_NAME%
+        echo ^> demo_host_1_%PROJECT_NAME% address :
+        docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' demo_host_1_%PROJECT_NAME%
 
-    docker rm -f demo_host_2_%PROJECT_NAME%
-    docker run -d ^
-        -v %cd%\ssh-key:/ssh-key ^
-        --name demo_host_2_%PROJECT_NAME% ^
-        docker-ansible-host:%PROJECT_NAME%
-    echo ^> demo_host_2_%PROJECT_NAME% address :
-    docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' demo_host_2_%PROJECT_NAME%
+        docker rm -f demo_host_2_%PROJECT_NAME%
+        docker run -d ^
+            -v %cd%\ssh-key:/ssh-key ^
+            --name demo_host_2_%PROJECT_NAME% ^
+            docker-ansible-host:%PROJECT_NAME%
+        echo ^> demo_host_2_%PROJECT_NAME% address :
+        docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' demo_host_2_%PROJECT_NAME%
+    )
+
 
     goto end
 )
 
 :cli-docker-args (
+    for %%p in (%*) do (
+        if "%%p"=="--down" ( set DOWN_DOCKER=1 )
+    )
     goto end
 )
 
 :cli-docker-help (
     echo Start virtual machine with docker.
+    echo.
+    echo Options:
+    echo      --down            Close down virtual machine with docker.
+    echo.
     goto end
 )
 
