@@ -267,3 +267,6 @@ ansible-galaxy install geerlingguy.gitlab -p roles
     - [ssh-copy-id](https://www.ssh.com/ssh/copy-id)
     - [sshpass & ssh-copy-id](https://jerryw.blog/2018/09/29/%E5%9C%A8-shell-script-%E4%B8%AD%E9%81%BF%E5%85%8D%E4%BA%92%E5%8B%95%E5%BC%8F%E7%9A%84-ssh-copy-id-%E7%9A%84%E5%81%9A%E6%B3%95/)
     - [how to avoid ssh asking permission?](https://unix.stackexchange.com/questions/33271)
++ Ansible Web UI
+    - [Ansible Tower](https://www.ansible.com/products/tower)
+    - [Ansible Semaphore](https://ansible-semaphore.com/)
